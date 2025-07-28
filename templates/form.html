@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Story Generator</title>
+    <style>
+        body {
+            background: linear-gradient(to bottom, #222, #444);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 500px;
+            margin: 60px auto;
+            background: #333;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: orange;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: none;
+            border-radius: 5px;
+            background: #222;
+            color: white;
+        }
+        button {
+            margin-top: 20px;
+            padding: 12px;
+            width: 100%;
+            border: none;
+            border-radius: 5px;
+            background-color: orange;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: darkorange;
+        }
+        #mic-icon {
+            cursor: pointer;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        #story-result {
+            margin-top: 30px;
+            background: #222;
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Please Fill Your Preferences</h2>
+
+    <label for="age">Age: 
+        <img id="mic-icon" src="{{ url_for('static', filename='Mic.png') }}" alt="Mic" width="24" />
+    </label>
+    <input type="text" id="age" placeholder="Enter age" />
+
+    <label for="gender">Gender:</label>
+    <select id="gender">
+        <option value="boy">Boy</option>
+        <option value="girl">Girl</option>
+    </select>
+
+    <label for="language">Language:</label>
+    <select id="language">
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+        <option value="mr">Marathi</option>
+    </select>
+
+    <button onclick="generateStory()">Generate Story</button>
+    <button onclick="speakStory()">Speak</button>
+
+    <div id="story-result"></div>
+</div>
+
+<script>
+    const mic = document.getElementById("mic-icon");
+
+    mic.addEventListener("click", () => {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.start();
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript.toLowerCase();
+            console.log("Heard:", transcript);
+
+            const numberWords = {
+                'one': 1, 'two': 2, 'three': 3, 'four': 4,
+                'five': 5, 'six': 6, 'seven': 7, 'eight': 8
+            };
+
+            let number = null;
+
+            // Try to extract digit first (e.g. "I am 5")
+            const matchDigit = transcript.match(/\d+/);
+            if (matchDigit) {
+                number = parseInt(matchDigit[0]);
+            } else {
+                // Then try matching number words (e.g. "I am five")
+                for (const [word, val] of Object.entries(numberWords)) {
+                    if (transcript.includes(word)) {
+                        number = val;
+                        break;
+                    }
+                }
+            }
+
+            if (number && number >= 1 && number <= 8) {
+                document.getElementById("age").value = number;
+            } else {
+                alert("Please say a number between 1 and 8.");
+            }
+        };
+
+        recognition.onerror = function(event) {
+            alert("Speech recognition error: " + event.error);
+        };
+    });
+
+    function generateStory() {
+        const age = document.getElementById("age").value;
+        const gender = document.getElementById("gender").value;
+
+        if (!age || age < 1 || age > 8) {
+            alert("Please enter a valid age between 1 and 8.");
+            return;
+        }
+
+        fetch("/generate_story", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                age: age,
+                gender: gender,
+                mood: "happy",
+                interests: "adventure",
+                story_length: "short",
+                time_of_day: "bedtime",
+                additional: ""
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                alert("Error: " + data.error);
+            } else {
+                document.getElementById("story-result").innerText = data.story;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Something went wrong. Check your console.");
+        });
+    }
+
+    function speakStory() {
+        const story = document.getElementById("story-result").innerText;
+        const language = document.getElementById("language").value;
+
+        fetch("/speak_story", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ story, language })
+        })
+        .then(res => res.blob())
+        .then(blob => {
+            const audioUrl = URL.createObjectURL(blob);
+            const audio = new Audio(audioUrl);
+            audio.play();
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Error playing story.");
+        });
+    }
+</script>
+</body>
+</html>
