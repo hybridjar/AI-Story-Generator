@@ -72,3 +72,74 @@ http://localhost:5000
 ### /generate_story — POST
 
 Request Body and further details should be documented here.
+
+## API Endpoints
+
+### `/generate_story` — POST  
+**Request Body:**
+```json
+{
+  "age": 5,
+  "gender": "boy",
+  "mood": "excited",
+  "interests": "space, robots",
+  "story_length": "long",
+  "time_of_day": "bedtime",
+  "additional": "Include a talking cat",
+  "language": "hi"
+}
+```
+
+**Response:**
+```json
+{
+  "story": "एक बार की बात है, एक छोटा लड़का था..."
+}
+```
+
+### `/speak_story` — POST  
+**Request Body:**
+```json
+{
+  "story": "Once upon a time...",
+  "language": "en"
+}
+```
+
+**Response:** `audio/mpeg` stream
+
+## File Structure
+```bash
+ai-story-generator/
+│
+├── app.py                 
+├── templates/
+│   └── form.html          
+├── static/                
+├── .env                   
+├── requirements.txt       
+└── README.md
+```
+
+## Environment Variables (.env)
+- `API_KEY` – Your Gemini API Key (Google Generative AI)  
+- `DB_URI` – SQLAlchemy database URI (e.g., SQLite, PostgreSQL)
+
+## Notes
+- Gemini model used: gemini-2.0-flash via REST transport  
+- Translation supported: 'en', 'hi', 'mr'  
+- Age limit: strictly 1 to 8 years for child-appropriate content  
+- Runs with `debug=True` — not suitable for production use
+
+## To-Do for Production
+- Add user authentication  
+- Use a WSGI server (e.g., Gunicorn, uWSGI)  
+- Enable logging and error handling  
+- Sanitize user inputs  
+- Set `debug=False` before deployment
+
+## Author
+**Anubhav Kumar**  
+Delhi, India  
+anubhavkumar11908@gmail.com  
+[LinkedIn](https://www.linkedin.com/feed/)
