@@ -1,0 +1,6 @@
+Flask
+flask_sqlalchemy
+python-dotenv
+google-generativeai
+gtts
+deep-translator
